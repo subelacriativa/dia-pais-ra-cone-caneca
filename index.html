@@ -2,12 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <title>Surpresa de Realidade Aumentada ✨</title>
-    
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efeito Caneca Oca 3D ✨</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
     <style>
         body {
             margin: 0;
@@ -16,6 +14,7 @@
             user-select: none;
         }
         
+        /* Mensagem de instrução no topo */
         #instrucao {
             position: fixed;
             top: 20px;
@@ -35,13 +34,14 @@
             pointer-events: none;
         }
 
+        /* Botão invisível em todo o ecrã para desbloquear o som do vídeo */
         #botao-play {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.75);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -55,72 +55,48 @@
             box-sizing: border-box;
         }
 
-        #botao-play h2 { font-size: 1.6rem; margin-bottom: 10px; }
-        #botao-play p { font-size: 1rem; opacity: 0.9; }
+        #botao-play h2 {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+        }
+
+        #botao-play p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
 
     <div id="botao-play">
-        <h2>Preparar Mágica ❤️</h2>
-        <p>Toque em qualquer lugar da tela para ligar a câmera e ativar o som.</p>
+        <h2>Preparar Mágica 3D ❤️</h2>
+        <p>Toque na tela para ativar o som e iniciar a câmera.</p>
     </div>
 
-    <div id="instrucao">Aponte a câmara para a frase na caneca! ✨</div>
+    <div id="instrucao">Aponte para a frase e olhe por cima da caneca! ☕✨</div>
 
-    <script>
-        // Criando um componente robusto do A-Frame para gerenciar o vídeo sem falhas
-        AFRAME.registerComponent('controle-video', {
-            init: function () {
-                const video = document.getElementById('video-mensagem');
-                
-                this.el.addEventListener('markerFound', () => {
-                    video.play().catch(err => console.log("Erro ao reproduzir:", err));
-                });
-
-                this.el.addEventListener('markerLost', () => {
-                    video.pause();
-                });
-            }
-        });
-    </script>
-
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
         
         <a-assets>
-            <!-- LINK CORRIGIDO PARA O MODO RAW DO GITHUB -->
-            <video 
-                id="video-mensagem" 
-                src="https://raw.githubusercontent.com/subelacriativa/ra/main/20260524_083410.mp4" 
-                preload="auto" 
-                loop="true" 
-                crossorigin="anonymous" 
-                playsinline 
-                webkit-playsinline>
-            </video>
+            <video id="video-mensagem" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
 
-        <!-- Adicionado o componente 'controle-video' aqui -->
-         <!-- Marcador com o componente de controle -->
-        <a-marker type="pattern" url="https://raw.githubusercontent.com/subelacriativa/ra/main/pattern-Montserrat%20Extra%20Bold.patt" id="marcador" controle-video>
+        <a-marker type="pattern" url="https://raw.githubusercontent.com/subelacriativa/ra/main/pattern-Montserrat%20Extra%20Bold.patt" id="marcador">
             
-            <!-- 
-               Ajustes feitos:
-               1. material="side: double" -> Faz o vídeo aparecer mesmo se estiver de cabeça para baixo ou invertido.
-               2. position="0 0.2 0" -> Eleva o vídeo 20cm acima da caneca para não sumir dentro dela.
-               3. scale="1.5 1.5 1.5" -> Aumenta o tamanho do plano para garantir que você o veja.
-            -->
-            <!-- 
-               Ajustes finos feitos:
-               1. position="-0.5 0.2 0" -> Mudamos o primeiro número de 0 para -0.5. Isso puxa o vídeo para a esquerda.
-               2. scale="1.2 1.6 1" -> Como o seu vídeo é vertical (celular), ajustamos a escala para ele não ficar "achatado" ou quadrado.
-            -->
+            <a-cylinder 
+                position="0 0 0" 
+                radius="0.8" 
+                height="2.5" 
+                material="colorWrite: false" 
+                scale="1 1 1">
+            </a-cylinder>
+
             <a-video 
                 src="#video-mensagem" 
-                position="-0.5 0.2 0" 
-                rotation="-90 0 0" 
-                scale="1.2 1.6 1"
-                material="side: double;">
+                width="1.2" 
+                height="1.8" 
+                position="0 0 0" 
+                rotation="0 0 0">
             </a-video>
 
         </a-marker>
@@ -130,25 +106,36 @@
 
     <script>
         const botaoPlay = document.getElementById('botao-play');
+        const marcador = document.getElementById('marcador');
         const video = document.getElementById('video-mensagem');
+        let somDesbloqueado = false;
 
+        // Ativa o áudio no primeiro clique do usuário
         botaoPlay.addEventListener('click', function() {
-            // Desbloqueia o áudio reproduzindo e pausando imediatamente
             video.play().then(() => {
                 video.pause(); 
-                esconderBotao();
+                somDesbloqueado = true;
+                botaoPlay.style.opacity = '0';
+                setTimeout(() => {
+                    botaoPlay.style.display = 'none';
+                }, 500);
             }).catch(error => {
-                console.log("Interação aceita:", error);
-                esconderBotao();
+                console.log("Erro ao liberar áudio:", error);
+                botaoPlay.style.display = 'none';
+                somDesbloqueado = true;
             });
         });
 
-        function esconderBotao() {
-            botaoPlay.style.opacity = '0';
-            setTimeout(() => {
-                botaoPlay.style.display = 'none';
-            }, 500);
-        }
+        // Controle do vídeo baseado no marcador
+        marcador.addEventListener('markerFound', function() {
+            if (somDesbloqueado) {
+                video.play();
+            }
+        });
+
+        marcador.addEventListener('markerLost', function() {
+            video.pause();
+        });
     </script>
 </body>
 </html>
